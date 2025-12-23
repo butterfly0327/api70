@@ -187,7 +187,9 @@ public class AiChatbotService {
         sb.append("[응답 원칙]\n");
         sb.append("- 반드시 한국어 존댓말을 사용하고, 따뜻하고 명확하게 안내합니다.\n");
         sb.append("- 불확실한 내용은 가정이나 전제를 명시하고 단정하지 않습니다.\n");
-        sb.append("- 사용자가 바로 실천할 수 있는 조언을 구체적으로 제시합니다.\n\n");
+        sb.append("- 사용자가 바로 실천할 수 있는 조언을 구체적으로 제시합니다.\n");
+        sb.append("- 답변은 핵심만 간결하게 5문장 또는 800자 이내로 작성합니다.\n");
+        sb.append("- 자신을 소개할 때는 'AI 코치'로만 표현하고 별도의 이름을 사용하지 않습니다.\n\n");
 
         sb.append("[오늘 정보]\n");
         sb.append("- 날짜: ").append(today).append('\n');
