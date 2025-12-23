@@ -353,3 +353,46 @@ CREATE TABLE IF NOT EXISTS ai_exercise_week_reviews (
     UNIQUE KEY uk_ai_exercise_week_email (email, week_start_date),
     CONSTRAINT fk_ai_exercise_email FOREIGN KEY (email) REFERENCES accounts(email) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 23) ai_chat_conversations
+CREATE TABLE IF NOT EXISTS ai_chat_conversations (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    email VARCHAR(255) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_ai_chat_conversations_email (email),
+    CONSTRAINT fk_ai_chat_conversation_email FOREIGN KEY (email) REFERENCES accounts(email) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 24) ai_chat_messages
+CREATE TABLE IF NOT EXISTS ai_chat_messages (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    conversation_id BIGINT UNSIGNED NOT NULL,
+    role VARCHAR(30) NOT NULL,
+    status VARCHAR(30) NOT NULL,
+    content LONGTEXT NULL,
+    error_message VARCHAR(512) DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_ai_chat_messages_conversation (conversation_id),
+    CONSTRAINT fk_ai_chat_message_conversation FOREIGN KEY (conversation_id) REFERENCES ai_chat_conversations(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 25) ai_chat_jobs
+CREATE TABLE IF NOT EXISTS ai_chat_jobs (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    conversation_id BIGINT UNSIGNED NOT NULL,
+    user_message_id BIGINT UNSIGNED NOT NULL,
+    assistant_message_id BIGINT UNSIGNED NOT NULL,
+    status VARCHAR(30) NOT NULL,
+    error_message VARCHAR(512) DEFAULT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_ai_chat_jobs_conversation (conversation_id),
+    CONSTRAINT fk_ai_chat_job_conversation FOREIGN KEY (conversation_id) REFERENCES ai_chat_conversations(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ai_chat_job_user_message FOREIGN KEY (user_message_id) REFERENCES ai_chat_messages(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ai_chat_job_assistant_message FOREIGN KEY (assistant_message_id) REFERENCES ai_chat_messages(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

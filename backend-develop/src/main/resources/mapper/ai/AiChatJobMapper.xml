@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yumyumcoach.domain.ai.chatbot.mapper.AiChatJobMapper">
+    <resultMap id="JobMap" type="com.yumyumcoach.domain.ai.chatbot.entity.AiChatJob">
+        <id column="id" property="id"/>
+        <result column="conversation_id" property="conversationId"/>
+        <result column="user_message_id" property="userMessageId"/>
+        <result column="assistant_message_id" property="assistantMessageId"/>
+        <result column="status" property="status"/>
+        <result column="error_message" property="errorMessage"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <resultMap id="JobDetailMap" type="com.yumyumcoach.domain.ai.chatbot.dto.ChatJobDetail">
+        <id column="job_id" property="jobId"/>
+        <result column="conversation_id" property="conversationId"/>
+        <result column="assistant_message_id" property="assistantMessageId"/>
+        <result column="email" property="email"/>
+        <result column="status" property="status"/>
+        <result column="question" property="question"/>
+    </resultMap>
+
+    <resultMap id="JobStatusViewMap" type="com.yumyumcoach.domain.ai.chatbot.dto.ChatJobStatusView">
+        <id column="job_id" property="jobId"/>
+        <result column="conversation_id" property="conversationId"/>
+        <result column="assistant_message_id" property="assistantMessageId"/>
+        <result column="job_status" property="jobStatus"/>
+        <result column="assistant_status" property="assistantStatus"/>
+        <result column="assistant_content" property="assistantContent"/>
+        <result column="assistant_error" property="assistantError"/>
+        <result column="job_error" property="jobError"/>
+    </resultMap>
+
+    <insert id="insertJob" parameterType="map" useGeneratedKeys="true" keyProperty="job.id">
+        INSERT INTO ai_chat_jobs (
+            conversation_id, user_message_id, assistant_message_id, status
+        ) VALUES (
+                 #{job.conversationId}, #{job.userMessageId}, #{job.assistantMessageId}, #{job.status}
+             )
+    </insert>
+
+    <select id="findDetailById" parameterType="long" resultMap="JobDetailMap">
+        SELECT j.id               AS job_id,
+               j.conversation_id  AS conversation_id,
+               j.assistant_message_id,
+               c.email            AS email,
+               j.status           AS status,
+               um.content         AS question
+        FROM ai_chat_jobs j
+                 JOIN ai_chat_conversations c ON j.conversation_id = c.id
+                 JOIN ai_chat_messages um ON um.id = j.user_message_id
+        WHERE j.id = #{jobId}
+    </select>
+
+    <select id="findStatusByIdAndEmail" parameterType="map" resultMap="JobStatusViewMap">
+        SELECT j.id                AS job_id,
+               j.conversation_id   AS conversation_id,
+               j.assistant_message_id,
+               j.status            AS job_status,
+               am.status           AS assistant_status,
+               am.content          AS assistant_content,
+               am.error_message    AS assistant_error,
+               j.error_message     AS job_error
+        FROM ai_chat_jobs j
+                 JOIN ai_chat_conversations c ON j.conversation_id = c.id
+                 JOIN ai_chat_messages am ON am.id = j.assistant_message_id
+        WHERE j.id = #{jobId}
+          AND c.email = #{email}
+    </select>
+
+    <update id="updateJobStatus" parameterType="map">
+        UPDATE ai_chat_jobs
+        SET status        = #{status},
+            error_message = #{errorMessage},
+            updated_at    = CURRENT_TIMESTAMP
+        WHERE id = #{jobId}
+    </update>
+</mapper>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yumyumcoach.domain.ai.chatbot.mapper.AiChatMessageMapper">
+    <resultMap id="MessageMap" type="com.yumyumcoach.domain.ai.chatbot.entity.AiChatMessage">
+        <id column="id" property="id"/>
+        <result column="conversation_id" property="conversationId"/>
+        <result column="role" property="role"/>
+        <result column="status" property="status"/>
+        <result column="content" property="content"/>
+        <result column="error_message" property="errorMessage"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <insert id="insertMessage" parameterType="map" useGeneratedKeys="true" keyProperty="message.id">
+        INSERT INTO ai_chat_messages (
+            conversation_id, role, status, content, error_message
+        ) VALUES (
+                 #{message.conversationId}, #{message.role}, #{message.status}, #{message.content}, #{message.errorMessage}
+             )
+    </insert>
+
+    <update id="updateAssistantMessage" parameterType="map">
+        UPDATE ai_chat_messages
+        SET status        = #{status},
+            content       = #{content},
+            error_message = #{errorMessage},
+            updated_at    = CURRENT_TIMESTAMP
+        WHERE id = #{messageId}
+    </update>
+
+    <select id="findByConversation" parameterType="map" resultMap="MessageMap">
+        SELECT m.*
+        FROM ai_chat_messages m
+                 JOIN ai_chat_conversations c ON m.conversation_id = c.id
+        WHERE m.conversation_id = #{conversationId}
+          AND c.email = #{email}
+        ORDER BY m.created_at ASC, m.id ASC
+    </select>
+</mapper>
