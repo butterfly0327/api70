@@ -68,6 +68,11 @@ public enum ErrorCode {
     EXERCISE_RECORD_FORBIDDEN(HttpStatus.FORBIDDEN, "해당 운동 기록에 대한 권한이 없습니다."),
     EXERCISE_INVALID_KEYWORD(HttpStatus.BAD_REQUEST, "검색어는 2글자 이상 입력해주세요."),
 
+    // ===== AI CHAT =====
+    AI_CHAT_CONVERSATION_NOT_FOUND(HttpStatus.NOT_FOUND, "대화를 찾을 수 없습니다."),
+    AI_CHAT_JOB_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 챗봇 작업을 찾을 수 없습니다."),
+    AI_CHAT_INVALID_QUESTION(HttpStatus.BAD_REQUEST, "질문이 비어 있습니다."),
+
     // ===== IMAGE =====
     IMAGE_UNSUPPORTED_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 이미지 형식입니다."),
     IMAGE_PRESIGN_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Presigned URL 발급에 실패했습니다.");
