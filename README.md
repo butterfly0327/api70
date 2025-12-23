@@ -155,17 +155,17 @@
    - `conversationId`를 `sessionStorage/localStorage`에 보관
    - 진입 시 `/api/ai/chatbot/conversations/{conversationId}/messages` 호출 → 시간순 렌더링
 4. **프롬프트 특징**
-   - 과거 채팅 내용은 Gemini에 전송하지 않고, **사용자 질문 + 건강 정보 + 주간 통계 + 오늘 날짜/요일**만 포함
-   - 답변은 항상 한국어 존댓말, 친절/정확/근거 제시, 불확실 시 단정 금지
+   - 과거 채팅 내용도 함께 전송하여 맥락을 유지하며, **사용자 질문 + 건강 정보 + 주간 통계 + 오늘 날짜/요일**과 결합
+   - 답변은 항상 한국어 존댓말, 친절/정확/근거 제시, 불확실 시 단정 금지, 이전 말투/내용 일관성 유지
 5. **모델 키**
    - `.env`(레포 루트)에 `gemini.api.key` 또는 `GMS_KEY`를 설정 (모델: `gemini-2.5-flash`)
 
 ## 6. 서버/로직 변경 사항
-- **비동기 이벤트**: `ChatJobRequestedEvent` + `ChatJobEventListener(@Async, AFTER_COMMIT)`로 Gemini 호출을 분리
-- **서비스**: `AiChatbotService`에서 질문 검증, 대화/메시지/Job 생성, Gemini 프롬프트 구성 및 응답 저장
-- **매퍼/SQL**: MyBatis 매퍼 3종(`AiChatConversationMapper`, `AiChatMessageMapper`, `AiChatJobMapper`) 및 XML 추가
-- **에러 코드**: `AI_CHAT_CONVERSATION_NOT_FOUND`, `AI_CHAT_JOB_NOT_FOUND`, `AI_CHAT_INVALID_QUESTION` 신설
-- **프롬프트 구성 요소**: 건강 정보(`UserService#getMyPage`), 주간 통계(`WeeklyStatsService#getWeeklyStats`), 오늘 날짜/요일, 사용자의 최신 질문만 결합
+  - **비동기 이벤트**: `ChatJobRequestedEvent` + `ChatJobEventListener(@Async, AFTER_COMMIT)`로 Gemini 호출을 분리
+  - **서비스**: `AiChatbotService`에서 질문 검증, 대화/메시지/Job 생성, Gemini 프롬프트 구성 및 응답 저장
+  - **매퍼/SQL**: MyBatis 매퍼 3종(`AiChatConversationMapper`, `AiChatMessageMapper`, `AiChatJobMapper`) 및 XML 추가
+  - **에러 코드**: `AI_CHAT_CONVERSATION_NOT_FOUND`, `AI_CHAT_JOB_NOT_FOUND`, `AI_CHAT_INVALID_QUESTION` 신설
+  - **프롬프트 구성 요소**: 건강 정보(`UserService#getMyPage`), 주간 통계(`WeeklyStatsService#getWeeklyStats`), 오늘 날짜/요일, 전체 대화 맥락, 최신 사용자 질문을 함께 전달
 
 ## 7. DB 스키마 추가 설명
 - **ai_chat_conversations**: 사용자별 대화 스레드 (FK: accounts.email)

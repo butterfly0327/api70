@@ -152,7 +152,9 @@ public class AiChatbotService {
             WeeklyStatsResponse stats = weeklyStatsService.getWeeklyStats(email, today);
             MyPageResponse.Health health = userService.getMyPage(email).getHealth();
 
-            String prompt = buildPrompt(health, stats, today, detail.getQuestion());
+            List<AiChatMessage> conversationHistory = messageMapper.findByConversation(detail.getConversationId(), email);
+
+            String prompt = buildPrompt(health, stats, today, detail.getQuestion(), conversationHistory, detail.getAssistantMessageId());
             String answer = geminiClient.generateContent(prompt);
 
             messageMapper.updateAssistantMessage(detail.getAssistantMessageId(),
@@ -181,12 +183,18 @@ public class AiChatbotService {
         return existing;
     }
 
-    private String buildPrompt(MyPageResponse.Health health, WeeklyStatsResponse stats, LocalDate today, String question) {
+    private String buildPrompt(MyPageResponse.Health health,
+                              WeeklyStatsResponse stats,
+                              LocalDate today,
+                              String question,
+                              List<AiChatMessage> conversationHistory,
+                              Long assistantMessageId) {
         StringBuilder sb = new StringBuilder();
         sb.append("당신은 사용자 맞춤형 건강/영양/운동 코치입니다. 제공된 데이터만 활용해 정확하고 근거 있는 답변을 주세요.\n");
         sb.append("[응답 원칙]\n");
         sb.append("- 반드시 한국어 존댓말을 사용하고, 따뜻하고 명확하게 안내합니다.\n");
         sb.append("- 불확실한 내용은 가정이나 전제를 명시하고 단정하지 않습니다.\n");
+        sb.append("- 제공된 이전 대화 맥락을 반영해 말투와 내용을 일관되게 유지합니다.\n");
         sb.append("- 사용자가 바로 실천할 수 있는 조언을 구체적으로 제시합니다.\n");
         sb.append("- 답변은 핵심만 간결하게 5문장 또는 800자 이내로 작성합니다.\n");
         sb.append("- 자신을 소개할 때는 'AI 코치'로만 표현하고 별도의 이름을 사용하지 않습니다.\n\n");
@@ -205,6 +213,9 @@ public class AiChatbotService {
         sb.append("- 기타 질환: ").append(defaultText(health != null ? health.getOtherDisease() : null)).append('\n');
         sb.append("- 활동 수준: ").append(defaultText(health != null ? health.getActivityLevel() : null)).append("\n\n");
 
+        sb.append("[이전 대화 맥락]\n");
+        sb.append(formatConversationHistory(conversationHistory, assistantMessageId));
+
         sb.append("[주간 식단 요약]\n");
         sb.append(formatDietStats(stats != null ? stats.getDietStats() : List.of()));
         sb.append("\n[주간 운동 요약]\n");
@@ -214,6 +225,34 @@ public class AiChatbotService {
         sb.append(question);
 
         return sb.toString();
+    }
+
+    private String formatConversationHistory(List<AiChatMessage> conversationHistory, Long assistantMessageId) {
+        if (conversationHistory == null || conversationHistory.isEmpty()) {
+            return "- 이전 대화가 없습니다.\n";
+        }
+
+        String formatted = conversationHistory.stream()
+                .filter(message -> !Objects.equals(message.getId(), assistantMessageId))
+                .filter(message -> ChatMessageStatus.COMPLETE.name().equals(message.getStatus()))
+                .filter(message -> message.getContent() != null && !message.getContent().isBlank())
+                .map(message -> String.format("- [%s] %s",
+                        formatRole(message.getRole()),
+                        message.getContent().trim()))
+                .collect(Collectors.joining("\n"));
+
+        if (formatted.isBlank()) {
+            return "- 요약할 이전 대화가 없습니다.\n";
+        }
+
+        return formatted + "\n";
+    }
+
+    private String formatRole(String role) {
+        if (ChatMessageRole.ASSISTANT.name().equals(role)) {
+            return "AI";
+        }
+        return "사용자";
     }
 
     private String formatDietStats(List<DietDailyStat> dietStats) {
