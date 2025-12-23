@@ -183,8 +183,9 @@ public class AiChatbotService {
             LocalDate today = LocalDate.now(KST);
             WeeklyStatsResponse stats = weeklyStatsService.getWeeklyStats(email, today);
             MyPageResponse.Health health = userService.getMyPage(email).getHealth();
+            List<AiChatMessage> conversationMessages = messageMapper.findByConversation(detail.getConversationId(), email);
 
-            String prompt = buildPrompt(health, stats, today, detail.getQuestion());
+            String prompt = buildPrompt(health, stats, today, conversationMessages, detail.getQuestion());
             String answer = geminiClient.generateContent(prompt);
 
             messageMapper.updateAssistantMessage(detail.getAssistantMessageId(),
@@ -221,7 +222,11 @@ public class AiChatbotService {
                 "지금 어떤 도움이 필요하신가요?";
     }
 
-    private String buildPrompt(MyPageResponse.Health health, WeeklyStatsResponse stats, LocalDate today, String question) {
+    private String buildPrompt(MyPageResponse.Health health,
+                              WeeklyStatsResponse stats,
+                              LocalDate today,
+                              List<AiChatMessage> conversationMessages,
+                              String question) {
         StringBuilder sb = new StringBuilder();
         sb.append("당신은 사용자 맞춤형 건강/영양/운동 코치입니다. 제공된 데이터만 활용해 정확하고 근거 있는 답변을 주세요.\n");
         sb.append("[응답 원칙]\n");
@@ -248,8 +253,38 @@ public class AiChatbotService {
         sb.append("\n[주간 운동 요약]\n");
         sb.append(formatExerciseStats(stats != null ? stats.getExerciseStats() : List.of()));
 
+        sb.append("\n[이전 대화 히스토리]\n");
+        sb.append(formatConversationHistory(conversationMessages));
+
         sb.append("\n[사용자 질문]\n");
         sb.append(question);
+
+        return sb.toString();
+    }
+
+    private String formatConversationHistory(List<AiChatMessage> conversationMessages) {
+        if (conversationMessages == null || conversationMessages.isEmpty()) {
+            return "- 이전 대화가 없습니다.\n";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        int index = 1;
+        for (AiChatMessage message : conversationMessages) {
+            if (message.getContent() == null || message.getContent().isBlank()) {
+                continue;
+            }
+            String speaker = ChatMessageRole.USER.name().equals(message.getRole()) ? "사용자" : "유미";
+            sb.append(index++)
+                    .append(". ")
+                    .append(speaker)
+                    .append(": ")
+                    .append(message.getContent())
+                    .append('\n');
+        }
+
+        if (sb.length() == 0) {
+            return "- 이전 대화가 없습니다.\n";
+        }
 
         return sb.toString();
     }
