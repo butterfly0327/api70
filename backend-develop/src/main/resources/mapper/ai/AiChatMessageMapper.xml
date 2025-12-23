@@ -40,4 +40,13 @@
           AND c.email = #{email}
         ORDER BY m.created_at ASC, m.id ASC
     </select>
+
+    <select id="findByIdAndEmail" parameterType="map" resultMap="MessageMap">
+        SELECT m.*
+        FROM ai_chat_messages m
+                 JOIN ai_chat_conversations c ON m.conversation_id = c.id
+        WHERE m.id = #{messageId}
+          AND c.email = #{email}
+        LIMIT 1
+    </select>
 </mapper>

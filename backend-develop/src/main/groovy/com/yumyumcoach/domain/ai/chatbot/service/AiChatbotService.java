@@ -58,6 +58,38 @@ public class AiChatbotService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
+    public ChatGreetingResponse createGreetingConversation(String email) {
+        AiChatConversation conversation = AiChatConversation.builder()
+                .email(email)
+                .build();
+        conversationMapper.insertConversation(conversation);
+
+        AiChatMessage assistantMessage = AiChatMessage.builder()
+                .conversationId(conversation.getId())
+                .role(ChatMessageRole.ASSISTANT.name())
+                .status(ChatMessageStatus.COMPLETE.name())
+                .content(buildGreetingMessage())
+                .build();
+        messageMapper.insertMessage(assistantMessage);
+
+        AiChatMessage savedAssistant = messageMapper.findByIdAndEmail(assistantMessage.getId(), email);
+
+        ChatMessageResponse greetingMessage = ChatMessageResponse.builder()
+                .messageId(assistantMessage.getId())
+                .role(ChatMessageRole.ASSISTANT.name())
+                .status(ChatMessageStatus.COMPLETE.name())
+                .content(savedAssistant != null ? savedAssistant.getContent() : assistantMessage.getContent())
+                .errorMessage(null)
+                .createdAt(savedAssistant != null ? savedAssistant.getCreatedAt() : null)
+                .build();
+
+        return ChatGreetingResponse.builder()
+                .conversationId(conversation.getId())
+                .assistantMessage(greetingMessage)
+                .build();
+    }
+
+    @Transactional
     public ChatJobCreationResponse createChatJob(String email, ChatQuestionRequest request) {
         if (request == null || request.getQuestion() == null || request.getQuestion().isBlank()) {
             throw new BusinessException(ErrorCode.AI_CHAT_INVALID_QUESTION, "질문이 비어 있습니다.");
@@ -179,6 +211,14 @@ public class AiChatbotService {
             throw new BusinessException(ErrorCode.AI_CHAT_CONVERSATION_NOT_FOUND);
         }
         return existing;
+    }
+
+    private String buildGreetingMessage() {
+        return "안녕하세요! 저는 식단/운동을 함께 관리하는 AI 코치 유미예요.\n" +
+                "- 식단 추천, 운동 루틴, 기록 해석 등 무엇이든 편하게 물어보세요.\n" +
+                "- 건강 정보나 목표가 바뀌면 설정에서 수정해 주시면 더 정확히 도와드릴게요.\n" +
+                "- 응급 상황이나 진료가 필요한 경우에는 반드시 전문 의료진과 상담하세요.\n\n" +
+                "지금 어떤 도움이 필요하신가요?";
     }
 
     private String buildPrompt(MyPageResponse.Health health, WeeklyStatsResponse stats, LocalDate today, String question) {
