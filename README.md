@@ -11,11 +11,41 @@
 ## 2. 신규 API 목록 (요약)
 | 기능 | Function | API Path | Header | HTTP Method |
 | --- | --- | --- | --- | --- |
+| 초기 대화 생성(인삿말) | `createGreetingConversation` | `/api/ai/chatbot/conversations/greetings` | `Bearer Token` | POST |
 | 질문 생성 및 Job 발행 | `createChatJob` | `/api/ai/chatbot/questions` | `Bearer Token` | POST |
 | Job 상태 폴링 | `getJobStatus` | `/api/ai/chatbot/jobs/{jobId}` | `Bearer Token`, `PathVariable` | GET |
 | 대화 메시지 조회 | `getConversationMessages` | `/api/ai/chatbot/conversations/{conversationId}/messages` | `Bearer Token`, `PathVariable` | GET |
 
 ## 3. API 상세 (Notion 스타일)
+
+### 0) 초기 인삿말 대화 생성
+- **기능**: 로그인 직후 호출해 기본 `conversationId`를 만들고, 챗봇이 먼저 인사/안내 메시지를 남깁니다. 이후 기록 불러오기 시에도 동일 ID가 세션/스토리지에 있어 오류가 발생하지 않습니다.
+
+#### 요청 헤더
+| 이름 | 값 | 비고 |
+| --- | --- | --- |
+| Authorization | `Bearer {accessToken}` | 필수 |
+
+#### Request Body
+- 없음 (빈 Body)
+
+#### Response (201 Created)
+```json
+{
+  "conversationId": 21,
+  "assistantMessage": {
+    "messageId": 120,
+    "role": "ASSISTANT",
+    "status": "COMPLETE",
+    "content": "안녕하세요! 저는 식단/운동을 함께 관리하는 AI 코치 유미예요...",
+    "errorMessage": null,
+    "createdAt": "2025-12-23T08:00:00"
+  }
+}
+```
+- 응답의 `conversationId`를 세션/스토리지에 저장해 이후 질문/기록 조회 시 사용합니다.
+
+---
 
 ### 1) 질문 생성 및 Job 발행
 - **기능**: 사용자 질문을 저장하고, Gemini 호출을 위한 Job을 PENDING 상태로 생성합니다. (즉시 응답)
@@ -130,30 +160,35 @@
 1. **공통 준비**
    - `{{baseUrl}}` = 서버 주소 (예: `http://localhost:8080`)
    - `Authorization` 탭에 `Bearer {accessToken}` 입력 (로그인 후 획득한 토큰)
-2. **질문 생성** (POST `/api/ai/chatbot/questions`)
+2. **인삿말 생성** (POST `/api/ai/chatbot/conversations/greetings`)
+   - Body 비움 (raw JSON 선택 후 `{}` 입력 가능)
+   - 응답의 `conversationId`와 `assistantMessage`를 세션/스토리지에 보관 → 페이지 진입 시 기본 버블로 사용
+3. **질문 생성** (POST `/api/ai/chatbot/questions`)
    - Body → raw → JSON 선택
    - 예시 입력:
      ```json
      { "question": "오늘 저녁에 먹을 다이어트 식단 추천", "conversationId": null }
      ```
    - Send 후 `jobId`, `assistantMessageId`를 응답에서 기록
-3. **폴링** (GET `/api/ai/chatbot/jobs/{{jobId}}`)
+4. **폴링** (GET `/api/ai/chatbot/jobs/{{jobId}}`)
    - `jobId`를 Path Variable로 설정
    - `status`가 `COMPLETED`/`FAILED`가 될 때까지 1~2초 간격으로 재실행
-4. **대화 복원** (GET `/api/ai/chatbot/conversations/{{conversationId}}/messages`)
+5. **대화 복원** (GET `/api/ai/chatbot/conversations/{{conversationId}}/messages`)
    - `conversationId`는 질문 생성 응답의 값을 사용
    - 응답 메시지 배열을 확인하여 UI 복원
 
 ## 5. 프론트 연동 지침 (상세 플로우)
+0. **초기 인삿말 생성**
+   - 로그인 직후 POST `/api/ai/chatbot/conversations/greetings` 호출
+   - 응답의 `conversationId`와 `assistantMessage`로 기본 챗버블을 표시하고, ID를 `sessionStorage/localStorage`에 저장
 1. **질문 전송**
    - 사용자 입력 직후 UI에 사용자 메시지를 optimistic하게 추가
-   - API 호출: POST `/api/ai/chatbot/questions` → `jobId`, `assistantMessageId`, `conversationId` 확보
+   - API 호출: POST `/api/ai/chatbot/questions` → `jobId`, `assistantMessageId`, `conversationId` 확보 (이미 저장된 `conversationId` 우선 전달)
 2. **Long Polling**
    - `jobId`로 `/api/ai/chatbot/jobs/{jobId}`를 주기적으로 호출
    - `PENDING`이면 재호출, `COMPLETED`면 `assistantMessageId`에 해당하는 UI bubble을 답변으로 업데이트, `FAILED`면 실패 표시 후 재시도 버튼 제공
 3. **페이지 이동/새로고침**
-   - `conversationId`를 `sessionStorage/localStorage`에 보관
-   - 진입 시 `/api/ai/chatbot/conversations/{conversationId}/messages` 호출 → 시간순 렌더링
+   - 저장된 `conversationId`를 사용해 `/api/ai/chatbot/conversations/{conversationId}/messages` 호출 → 시간순 렌더링
 4. **프롬프트 특징**
    - 과거 채팅 내용은 Gemini에 전송하지 않고, **사용자 질문 + 건강 정보 + 주간 통계 + 오늘 날짜/요일**만 포함
    - 답변은 항상 한국어 존댓말, 친절/정확/근거 제시, 불확실 시 단정 금지

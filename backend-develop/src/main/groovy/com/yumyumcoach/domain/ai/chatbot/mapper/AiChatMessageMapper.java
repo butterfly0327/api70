@@ -17,4 +17,7 @@ public interface AiChatMessageMapper {
 
     List<AiChatMessage> findByConversation(@Param("conversationId") Long conversationId,
                                            @Param("email") String email);
+
+    AiChatMessage findByIdAndEmail(@Param("messageId") Long messageId,
+                                   @Param("email") String email);
 }

@@ -1,6 +1,7 @@
 package com.yumyumcoach.domain.ai.chatbot.controller;
 
 import com.yumyumcoach.domain.ai.chatbot.dto.ChatConversationResponse;
+import com.yumyumcoach.domain.ai.chatbot.dto.ChatGreetingResponse;
 import com.yumyumcoach.domain.ai.chatbot.dto.ChatJobCreationResponse;
 import com.yumyumcoach.domain.ai.chatbot.dto.ChatJobStatusResponse;
 import com.yumyumcoach.domain.ai.chatbot.dto.ChatQuestionRequest;
@@ -16,6 +17,13 @@ import org.springframework.web.bind.annotation.*;
 public class AiChatbotController {
 
     private final AiChatbotService aiChatbotService;
+
+    @PostMapping("/conversations/greetings")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ChatGreetingResponse createGreetingConversation() {
+        String email = CurrentUser.email();
+        return aiChatbotService.createGreetingConversation(email);
+    }
 
     @PostMapping("/questions")
     @ResponseStatus(HttpStatus.CREATED)
