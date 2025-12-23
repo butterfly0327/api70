@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yumyumcoach.domain.diet.mapper.FoodMapper">
+
+    <resultMap id="FoodResultMap" type="com.yumyumcoach.domain.diet.dto.FoodDto">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="carbohydrate" property="carbohydrate"/>
+        <result column="protein" property="protein"/>
+        <result column="fat" property="fat"/>
+        <result column="calories" property="calories"/>
+    </resultMap>
+
+    <select id="selectFoodById" parameterType="long" resultMap="FoodResultMap">
+        SELECT id, name, carbohydrate, protein, fat, calories
+        FROM foods
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectFoods" resultMap="FoodResultMap">
+        SELECT id, name, carbohydrate, protein, fat, calories
+        FROM foods
+        <where>
+            <if test="keyword != null and keyword != ''">
+                name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <insert id="insertFood" parameterType="com.yumyumcoach.domain.diet.dto.CreateFoodRequest" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO foods (
+            name,
+            carbohydrate,
+            protein,
+            fat,
+            calories
+        ) VALUES (
+            #{name},
+            #{carbohydrate},
+            #{protein},
+            #{fat},
+            #{calories}
+        )
+    </insert>
+
+    <update id="updateFood" parameterType="map">
+        UPDATE foods
+        <set>
+            <if test="request.name != null">name = #{request.name},</if>
+            <if test="request.carbohydrate != null">carbohydrate = #{request.carbohydrate},</if>
+            <if test="request.protein != null">protein = #{request.protein},</if>
+            <if test="request.fat != null">fat = #{request.fat},</if>
+            <if test="request.calories != null">calories = #{request.calories},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteFood" parameterType="long">
+        DELETE FROM foods
+        WHERE id = #{id}
+    </delete>
+
+</mapper>
+

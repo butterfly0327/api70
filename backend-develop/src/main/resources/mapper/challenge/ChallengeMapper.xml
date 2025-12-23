@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yumyumcoach.domain.challenge.mapper.ChallengeMapper">
+
+    <!-- 공용 챌린지 매핑 -->
+    <resultMap id="ChallengeResultMap" type="com.yumyumcoach.domain.challenge.entity.Challenge">
+        <id     property="id"               column="id"/>
+        <result property="rewardTitleId"    column="reward_title_id"/>
+        <result property="name"             column="name"/>
+        <result property="shortDescription" column="short_description"/>
+        <result property="goalSummary"      column="goal_summary"/>
+        <result property="ruleDescription"  column="rule_description"/>
+        <result property="imageUrl"         column="image_url"/>
+        <result property="recruitStartDate" column="recruit_start_date"/>
+        <result property="recruitEndDate"   column="recruit_end_date"/>
+        <result property="startDate"        column="start_date"/>
+        <result property="endDate"          column="end_date"/>
+        <result property="isActive"         column="is_active"/>
+        <result property="goalType"         column="goal_type"/>
+        <result property="challengeType"    column="challenge_type"/>
+    </resultMap>
+
+    <!-- 특정 기간에 시작되는 챌린지 목록 조회 -->
+    <select id="findByPeriod" resultMap="ChallengeResultMap">
+        SELECT id,
+               reward_title_id,
+               name,
+               short_description,
+               goal_summary,
+               rule_description,
+               image_url,
+               recruit_start_date,
+               recruit_end_date,
+               start_date,
+               end_date,
+               is_active,
+               goal_type,
+               challenge_type
+        FROM challenges
+        WHERE start_date BETWEEN #{startDate} AND #{endDate}
+          AND is_active = 1
+        ORDER BY start_date, id
+    </select>
+
+    <!-- 챌린지 단일 조회 -->
+    <select id="findById" resultMap="ChallengeResultMap">
+        SELECT
+            id,
+            reward_title_id,
+            name,
+            short_description,
+            goal_summary,
+            rule_description,
+            image_url,
+            recruit_start_date,
+            recruit_end_date,
+            start_date,
+            end_date,
+            is_active,
+            goal_type,
+            challenge_type
+        FROM challenges
+        WHERE id = #{challengeId}
+    </select>
+
+    <!-- 챌린지 참여 인원 수 조회 -->
+    <select id="countParticipants" resultType="int">
+        SELECT COUNT(*)
+        FROM challenge_participants
+        WHERE challenge_id = #{challengeId}
+    </select>
+
+</mapper>

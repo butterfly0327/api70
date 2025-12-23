@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yumyumcoach.domain.challenge.mapper.ChallengeParticipantMapper">
+
+    <!-- 공용 챌린지 참여 매핑 -->
+    <resultMap id="ChallengeParticipantResultMap"
+               type="com.yumyumcoach.domain.challenge.entity.ChallengeParticipant">
+        <id     property="challengeId"        column="challenge_id"/>
+        <id     property="email"              column="email"/>
+        <result property="joinedAt"           column="joined_at"/>
+        <result property="status"             column="status"/>
+        <result property="difficultyCode"     column="difficulty_code"/>
+        <result property="requiredSuccessDays" column="required_success_days"/>
+        <result property="dailyTargetValue"   column="daily_target_value"/>
+        <result property="progressPercentage" column="progress_percentage"/>
+        <result property="successDays"         column="success_days"/>
+        <result property="lastEvaluatedAt"    column="last_evaluated_at"/>
+        <result property="completedAt"        column="completed_at"/>
+    </resultMap>
+
+    <!-- 챌린지 + 이메일로 참여 정보 조회 -->
+    <select id="findByChallengeIdAndEmail"
+            resultMap="ChallengeParticipantResultMap">
+        SELECT
+            challenge_id,
+            email,
+            joined_at,
+            status,
+            difficulty_code,
+            required_success_days,
+            daily_target_value,
+            progress_percentage,
+            success_days,
+            last_evaluated_at,
+            completed_at
+        FROM challenge_participants
+        WHERE challenge_id = #{challengeId}
+          AND email = #{email}
+    </select>
+
+    <!-- 이미 참여 중인지 여부 확인 -->
+    <select id="existsByChallengeIdAndEmail" resultType="int">
+        SELECT COUNT(*)
+        FROM challenge_participants
+        WHERE challenge_id = #{challengeId}
+          AND email = #{email}
+    </select>
+
+    <!-- 새로운 참여 정보 추가 -->
+    <insert id="insert" parameterType="com.yumyumcoach.domain.challenge.entity.ChallengeParticipant">
+        INSERT INTO challenge_participants (
+            challenge_id,
+            email,
+            joined_at,
+            status,
+            difficulty_code,
+            required_success_days,
+            daily_target_value,
+            progress_percentage,
+            success_days,
+            last_evaluated_at,
+            completed_at
+        ) VALUES (
+                     #{challengeId},
+                     #{email},
+                     #{joinedAt},
+                     #{status},
+                     #{difficultyCode},
+                     #{requiredSuccessDays},
+                     #{dailyTargetValue},
+                     #{progressPercentage},
+                     #{successDays},
+                     #{lastEvaluatedAt},
+                     #{completedAt}
+                 )
+    </insert>
+
+    <!-- 참여 상태 변경 (completed / left 등) -->
+    <update id="updateStatus">
+        UPDATE challenge_participants
+        SET status = #{status},
+            completed_at = #{completedAt}
+        WHERE challenge_id = #{challengeId}
+          AND email = #{email}
+    </update>
+
+    <!-- 진행률 및 마지막 평가 시각 갱신 -->
+    <update id="updateProgress">
+        UPDATE challenge_participants
+        SET success_days = #{successDays},
+            progress_percentage = #{progressPercentage},
+            last_evaluated_at = #{evaluatedAt}
+        WHERE challenge_id = #{challengeId}
+          AND email = #{email}
+    </update>
+
+    <!-- 참여 정보 삭제 -->
+    <delete id="deleteByChallengeIdAndEmail">
+        DELETE FROM challenge_participants
+        WHERE challenge_id = #{challengeId}
+          AND email = #{email}
+    </delete>
+
+    <!-- 특정 챌린지에 참여한 전체 인원 수 조회 -->
+    <select id="countByChallengeId" resultType="int">
+        SELECT COUNT(*)
+        FROM challenge_participants
+        WHERE challenge_id = #{challengeId}
+    </select>
+
+</mapper>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yumyumcoach.domain.ai.mapper.AiMealPlanMapper">
+    <resultMap id="AiMealPlanMap" type="com.yumyumcoach.domain.ai.entity.AiMealPlan">
+        <id column="id" property="id"/>
+        <result column="email" property="email"/>
+        <result column="target_date" property="targetDate"/>
+        <result column="weekday_kr" property="weekdayKr"/>
+        <result column="breakfast_menu" property="breakfastMenu"/>
+        <result column="breakfast_calories" property="breakfastCalories"/>
+        <result column="breakfast_comment" property="breakfastComment"/>
+        <result column="lunch_menu" property="lunchMenu"/>
+        <result column="lunch_calories" property="lunchCalories"/>
+        <result column="lunch_comment" property="lunchComment"/>
+        <result column="dinner_menu" property="dinnerMenu"/>
+        <result column="dinner_calories" property="dinnerCalories"/>
+        <result column="dinner_comment" property="dinnerComment"/>
+        <result column="total_calories" property="totalCalories"/>
+        <result column="prompt_context" property="promptContext"/>
+        <result column="raw_response" property="rawResponse"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="findByEmailAndDate" parameterType="map" resultMap="AiMealPlanMap">
+        SELECT *
+        FROM ai_meal_plans
+        WHERE email = #{email}
+          AND target_date = #{targetDate}
+    </select>
+
+    <insert id="upsertMealPlan" parameterType="map" useGeneratedKeys="true" keyProperty="plan.id">
+        INSERT INTO ai_meal_plans (
+            email, target_date, weekday_kr,
+            breakfast_menu, breakfast_calories, breakfast_comment,
+            lunch_menu, lunch_calories, lunch_comment,
+            dinner_menu, dinner_calories, dinner_comment,
+            total_calories, prompt_context, raw_response
+        ) VALUES (
+                 #{plan.email}, #{plan.targetDate}, #{plan.weekdayKr},
+                 #{plan.breakfastMenu}, #{plan.breakfastCalories}, #{plan.breakfastComment},
+                 #{plan.lunchMenu}, #{plan.lunchCalories}, #{plan.lunchComment},
+                 #{plan.dinnerMenu}, #{plan.dinnerCalories}, #{plan.dinnerComment},
+                 #{plan.totalCalories}, #{plan.promptContext}, #{plan.rawResponse}
+             )
+        ON DUPLICATE KEY UPDATE
+            weekday_kr       = VALUES(weekday_kr),
+            breakfast_menu   = VALUES(breakfast_menu),
+            breakfast_calories = VALUES(breakfast_calories),
+            breakfast_comment = VALUES(breakfast_comment),
+            lunch_menu       = VALUES(lunch_menu),
+            lunch_calories   = VALUES(lunch_calories),
+            lunch_comment    = VALUES(lunch_comment),
+            dinner_menu      = VALUES(dinner_menu),
+            dinner_calories  = VALUES(dinner_calories),
+            dinner_comment   = VALUES(dinner_comment),
+            total_calories   = VALUES(total_calories),
+            prompt_context   = VALUES(prompt_context),
+            raw_response     = VALUES(raw_response),
+            updated_at       = CURRENT_TIMESTAMP
+    </insert>
+</mapper>

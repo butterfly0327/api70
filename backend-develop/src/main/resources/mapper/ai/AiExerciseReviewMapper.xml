@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yumyumcoach.domain.ai.mapper.AiExerciseReviewMapper">
+    <resultMap id="AiExerciseReviewMap" type="com.yumyumcoach.domain.ai.entity.AiExerciseReview">
+        <id column="id" property="id"/>
+        <result column="email" property="email"/>
+        <result column="week_start_date" property="weekStartDate"/>
+        <result column="week_end_date" property="weekEndDate"/>
+        <result column="evaluated_until_date" property="evaluatedUntilDate"/>
+        <result column="volume_status" property="volumeStatus"/>
+        <result column="recommendation" property="recommendation"/>
+        <result column="summary_text" property="summaryText"/>
+        <result column="prompt_context" property="promptContext"/>
+        <result column="raw_response" property="rawResponse"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="findByEmailAndWeek" parameterType="map" resultMap="AiExerciseReviewMap">
+        SELECT *
+        FROM ai_exercise_week_reviews
+        WHERE email = #{email}
+          AND week_start_date = #{weekStart}
+    </select>
+
+    <insert id="upsertReview" parameterType="map" useGeneratedKeys="true" keyProperty="review.id">
+        INSERT INTO ai_exercise_week_reviews (
+            email, week_start_date, week_end_date, evaluated_until_date,
+            volume_status, recommendation, summary_text,
+            prompt_context, raw_response
+        ) VALUES (
+                 #{review.email}, #{review.weekStartDate}, #{review.weekEndDate}, #{review.evaluatedUntilDate},
+                 #{review.volumeStatus}, #{review.recommendation}, #{review.summaryText},
+                 #{review.promptContext}, #{review.rawResponse}
+             )
+        ON DUPLICATE KEY UPDATE
+            week_end_date        = VALUES(week_end_date),
+            evaluated_until_date = VALUES(evaluated_until_date),
+            volume_status        = VALUES(volume_status),
+            recommendation       = VALUES(recommendation),
+            summary_text         = VALUES(summary_text),
+            prompt_context       = VALUES(prompt_context),
+            raw_response         = VALUES(raw_response),
+            updated_at           = CURRENT_TIMESTAMP
+    </insert>
+</mapper>

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yumyumcoach.domain.user.mapper.ProfileMapper">
+
+    <resultMap id="ProfileResultMap" type="com.yumyumcoach.domain.user.entity.Profile">
+        <result column="email" property="email"/>
+        <result column="introduction" property="introduction"/>
+        <result column="profile_image_url" property="profileImageUrl"/>
+        <result column="birth_date" property="birthDate"/>
+        <result column="height" property="height"/>
+        <result column="current_weight" property="currentWeight"/>
+        <result column="target_weight" property="targetWeight"/>
+        <result column="has_diabetes" property="hasDiabetes"/>
+        <result column="has_hypertension" property="hasHypertension"/>
+        <result column="has_hyperlipidemia" property="hasHyperlipidemia"/>
+        <result column="other_disease" property="otherDisease"/>
+        <result column="goal" property="goal"/>
+        <result column="activity_level" property="activityLevel"/>
+        <result column="display_title_id" property="displayTitleId"/>
+    </resultMap>
+
+    <!-- 프로필 조회 -->
+    <select id="findByEmail" resultMap="ProfileResultMap">
+        SELECT
+            email,
+            introduction,
+            profile_image_url,
+            birth_date,
+            height,
+            current_weight,
+            target_weight,
+            has_diabetes,
+            has_hypertension,
+            has_hyperlipidemia,
+            other_disease,
+            goal,
+            activity_level,
+            display_title_id
+        FROM profiles
+        WHERE email = #{email}
+    </select>
+
+    <!-- profiles row 생성 (email만) -->
+    <insert id="insertEmpty">
+        INSERT IGNORE INTO profiles (email)
+        VALUES (#{email})
+    </insert>
+
+    <!-- 기본정보 수정(소개/프로필이미지) -->
+    <update id="updateBasic" parameterType="com.yumyumcoach.domain.user.entity.Profile">
+        UPDATE profiles
+        <set>
+            <!-- TODO: 닉네임 수정 API 만들어지면 도입하기 -->
+            <if test="introduction != null">introduction = #{introduction},</if>
+            <if test="profileImageUrl != null">profile_image_url = #{profileImageUrl},</if>
+        </set>
+        WHERE email = #{email}
+    </update>
+
+    <!-- 건강정보 수정 -->
+    <update id="updateHealth" parameterType="com.yumyumcoach.domain.user.entity.Profile">
+        UPDATE profiles
+        <set>
+            <if test="birthDate != null">birth_date = #{birthDate},</if>
+
+            <if test="height != null">height = #{height},</if>
+            <if test="currentWeight != null">current_weight = #{currentWeight},</if>
+            <if test="targetWeight != null">target_weight = #{targetWeight},</if>
+
+            <if test="hasDiabetes != null">has_diabetes = #{hasDiabetes},</if>
+            <if test="hasHypertension != null">has_hypertension = #{hasHypertension},</if>
+            <if test="hasHyperlipidemia != null">has_hyperlipidemia = #{hasHyperlipidemia},</if>
+            <if test="otherDisease != null">other_disease = #{otherDisease},</if>
+
+            <if test="goal != null">goal = #{goal},</if>
+            <if test="activityLevel != null">activity_level = #{activityLevel},</if>
+        </set>
+        WHERE email = #{email}
+    </update>
+
+    <!-- 대표 타이틀 설정 -->
+    <update id="updateDisplayTitle">
+        UPDATE profiles
+        SET display_title_id = #{displayTitleId}
+        WHERE email = #{email}
+    </update>
+
+    <!-- 상대방 프로필 조회 -->
+    <select id="findUserProfileRow"
+            parameterType="long"
+            resultType="com.yumyumcoach.domain.user.dto.UserProfileRow">
+        SELECT
+            a.id AS userId,
+            a.email AS email,
+            a.username AS username,
+            p.introduction AS introduction,
+            p.profile_image_url AS profileImageUrl,
+            t.id AS currentTitleId,
+            t.name AS currentTitleName,
+            t.icon_emoji AS currentTitleIconEmoji
+        FROM accounts a
+                 JOIN profiles p ON p.email = a.email
+                 LEFT JOIN titles t ON t.id = p.display_title_id
+        WHERE a.id = #{userId}
+    </select>
+
+</mapper>

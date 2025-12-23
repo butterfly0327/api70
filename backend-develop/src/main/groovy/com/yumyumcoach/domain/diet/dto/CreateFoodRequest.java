@@ -1,0 +1,29 @@
+package com.yumyumcoach.domain.diet.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
+import lombok.*;
+
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class CreateFoodRequest {
+
+    @NotBlank
+    private String name;
+
+    @PositiveOrZero
+    private Double carbohydrate;
+
+    @PositiveOrZero
+    private Double protein;
+
+    @PositiveOrZero
+    private Double fat;
+
+    @PositiveOrZero
+    private Double calories;
+}
+
+

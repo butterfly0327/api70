@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yumyumcoach.domain.user.mapper.FollowMapper">
+
+    <!-- 팔로우 관계 존재 여부 -->
+    <select id="exists" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM follows
+            WHERE follower_email = #{followerEmail}
+              AND followee_email = #{followeeEmail}
+        )
+    </select>
+
+    <!-- 팔로우 추가 -->
+    <insert id="insert" parameterType="com.yumyumcoach.domain.user.entity.Follow">
+        INSERT INTO follows (
+            follower_email, followee_email, followed_at
+        ) VALUES (
+                     #{followerEmail}, #{followeeEmail}, #{followedAt}
+                 )
+    </insert>
+
+    <!-- 팔로우 취소 -->
+    <delete id="delete">
+        DELETE FROM follows
+        WHERE follower_email = #{followerEmail}
+          AND followee_email = #{followeeEmail}
+    </delete>
+
+    <!-- 팔로워 수 -->
+    <select id="countFollowers" resultType="long">
+        SELECT COUNT(*)
+        FROM follows
+        WHERE followee_email = #{email}
+    </select>
+
+    <!-- 팔로잉 수 -->
+    <select id="countFollowings" resultType="long">
+        SELECT COUNT(*)
+        FROM follows
+        WHERE follower_email = #{email}
+    </select>
+
+    <!-- 내가 팔로우하는 유저 목록 -->
+    <select id="findMyFollowings" resultType="com.yumyumcoach.domain.user.dto.MyFollowingsResponse$User">
+        SELECT
+            a.id AS userId,
+            a.username AS username,
+            p.profile_image_url AS profileImageUrl,
+            p.introduction AS introduction,
+            CASE WHEN back.follower_email IS NULL THEN FALSE ELSE TRUE END AS isFollowingBack
+        FROM follows f
+        JOIN accounts a
+         ON a.email = f.followee_email
+        LEFT JOIN profiles p
+         ON p.email = a.email
+        LEFT JOIN follows back
+         ON back.follower_email = f.followee_email
+        AND back.followee_email = #{email}
+        WHERE f.follower_email = #{email}
+        ORDER BY f.followed_at DESC
+    </select>
+
+    <!-- 나를 팔로우하는 유저 목록 -->
+    <select id="findMyFollowers" resultType="com.yumyumcoach.domain.user.dto.MyFollowersResponse$User">
+        SELECT
+            a.id AS userId,
+            a.username AS username,
+            p.profile_image_url AS profileImageUrl,
+            p.introduction AS introduction,
+            CASE WHEN me.follower_email IS NULL THEN FALSE ELSE TRUE END AS isFollowing
+        FROM follows f
+        JOIN accounts a
+         ON a.email = f.follower_email
+        LEFT JOIN profiles p
+         ON p.email = a.email
+        LEFT JOIN follows me
+         ON me.follower_email = #{email}
+        AND me.followee_email = f.follower_email
+        WHERE f.followee_email = #{email}
+        ORDER BY f.followed_at DESC
+    </select>
+
+
+</mapper>

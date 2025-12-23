@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yumyumcoach.domain.diet.mapper.DietRecordMapper">
+
+    <!-- 식단 상세 + 음식 리스트 -->
+    <resultMap id="DietRecordDetailMap" type="com.yumyumcoach.domain.diet.dto.DietRecordDto">
+        <id column="id" property="id"/>
+        <result column="recorded_at" property="recordedAt"/>
+        <result column="meal_type" property="mealType"/>
+        <result column="image_url" property="imageUrl"/>
+
+        <collection property="items" ofType="com.yumyumcoach.domain.diet.dto.DietFoodDto">
+            <id column="diet_food_id" property="id"/>
+            <result column="diet_id" property="dietId"/>
+            <result column="food_id" property="foodId"/>
+            <result column="food_name" property="foodName"/>
+            <result column="serve_count" property="serveCount"/>
+            <result column="order_index" property="orderIndex"/>
+            <result column="calories" property="calories"/>
+            <result column="carbohydrate" property="carbs"/>
+            <result column="protein" property="protein"/>
+            <result column="fat" property="fat"/>
+        </collection>
+    </resultMap>
+
+    <!-- 식단 단건 상세 -->
+    <select id="selectDietRecordDetail" resultMap="DietRecordDetailMap">
+        SELECT
+            dr.id,
+            DATE(dr.recorded_at) AS recorded_at,
+            dr.meal_type,
+            dr.image_url,
+            df.id          AS diet_food_id,
+            df.diet_id,
+            df.food_id,
+            f.name         AS food_name,
+            df.serve_count,
+            df.order_index,
+            f.calories,
+            f.carbohydrate,
+            f.protein,
+            f.fat
+        FROM diet_records dr
+                 LEFT JOIN diet_foods df ON dr.id = df.diet_id
+                 LEFT JOIN foods f ON df.food_id = f.id
+        WHERE dr.id = #{id}
+          AND dr.email = #{email}
+        ORDER BY df.order_index
+    </select>
+
+    <!-- 사용자별 식단 목록 (페이징) -->
+    <select id="selectDietRecordsByUser" resultType="com.yumyumcoach.domain.diet.dto.DietRecordDto">
+        SELECT
+            id,
+            DATE(recorded_at) AS recordedAt,
+            meal_type         AS mealType,
+            image_url         AS imageUrl
+        FROM diet_records
+        WHERE email = #{email}
+        ORDER BY recorded_at DESC, id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- 사용자별 특정 날짜 식단 목록 (페이징) -->
+    <select id="selectDietRecordsByUserAndDate"
+            resultType="com.yumyumcoach.domain.diet.dto.DietRecordDto">
+        SELECT
+            id,
+            recorded_at      AS recordedAt,
+            meal_type        AS mealType,
+            image_url        AS imageUrl
+        FROM diet_records
+        WHERE email = #{email}
+          AND recorded_at >= CONCAT(#{recordedAt}, ' 00:00:00')
+          AND recorded_at &lt;  DATE_ADD(CONCAT(#{recordedAt}, ' 00:00:00'), INTERVAL 1 DAY)
+        ORDER BY recorded_at DESC, id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- 식단 추가 -->
+    <insert id="insertDietRecord"
+            parameterType="map"
+            useGeneratedKeys="true"
+            keyProperty="req.id">
+        INSERT INTO diet_records (
+            email,
+            recorded_at,
+            meal_type,
+            image_url
+        ) VALUES (
+                     #{email},
+                     #{req.recordedAt},
+                     #{req.mealType},
+                     #{req.imageUrl}
+                 )
+    </insert>
+
+    <!-- 식단 수정 (소유자 체크까지 같이) -->
+    <update id="updateDietRecord" parameterType="map">
+        UPDATE diet_records
+        SET
+            recorded_at = #{req.recordedAt},
+            meal_type   = #{req.mealType},
+            image_url   = #{req.imageUrl}
+        WHERE id = #{id}
+          AND email = #{email}
+    </update>
+
+    <!-- 식단 삭제 -->
+    <delete id="deleteDietRecord" parameterType="map">
+        DELETE FROM diet_records
+        WHERE id = #{id}
+          AND email = #{email}
+    </delete>
+
+    <select id="selectOwnerEmail" resultType="string">
+        SELECT email
+        FROM diet_records
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectRecordedAtByIdAndEmail" resultType="java.time.LocalDateTime">
+        SELECT recorded_at
+        FROM diet_records
+        WHERE id = #{id}
+          AND email = #{email}
+    </select>
+
+</mapper>
+

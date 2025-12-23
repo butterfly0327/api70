@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yumyumcoach.domain.community.mapper.PostCommentMapper">
+
+    <resultMap id="PostCommentResultMap" type="com.yumyumcoach.domain.community.entity.PostComment">
+        <id column="id" property="id"/>
+        <result column="post_id" property="postId"/>
+        <result column="author_email" property="authorEmail"/>
+        <result column="author_id" property="authorId"/>
+        <result column="content" property="content"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <!-- 특정 게시글의 댓글 목록 -->
+    <select id="findByPostId" parameterType="long" resultMap="PostCommentResultMap">
+        SELECT
+        c.id,
+        c.post_id,
+        c.author_email,
+        a.id AS author_id,
+        a.username AS author_username,
+        pr.profile_image_url AS author_profile_image_url,
+        c.content,
+        c.created_at
+        FROM post_comments c
+        JOIN accounts a ON a.email = c.author_email
+        LEFT JOIN profiles pr ON pr.email = c.author_email
+        WHERE c.post_id = #{postId}
+        ORDER BY c.created_at ASC
+    </select>
+
+    <!-- 댓글 개수 -->
+    <select id="countByPostId" parameterType="long" resultType="long">
+        SELECT COUNT(*)
+        FROM post_comments
+        WHERE post_id = #{postId}
+    </select>
+
+    <!-- 댓글 단건 조회 -->
+    <select id="findById" parameterType="long" resultMap="PostCommentResultMap">
+        SELECT
+        c.id,
+        c.post_id,
+        c.author_email,
+        a.id AS author_id,
+        a.username AS author_username,
+        pr.profile_image_url AS author_profile_image_url,
+        c.content,
+        c.created_at
+        FROM post_comments c
+        JOIN accounts a ON a.email = c.author_email
+        LEFT JOIN profiles pr ON pr.email = c.author_email
+        WHERE c.id = #{commentId}
+    </select>
+
+    <!-- 댓글 INSERT -->
+    <insert id="insert"
+            parameterType="com.yumyumcoach.domain.community.entity.PostComment"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO post_comments (
+            post_id, author_email, content,created_at
+        )
+        VALUES (
+           #{postId}, #{authorEmail}, #{content}, #{createdAt}
+               )
+    </insert>
+
+    <!-- 댓글 수정 -->
+    <update id="update" parameterType="com.yumyumcoach.domain.community.entity.PostComment">
+        UPDATE post_comments
+        SET content = #{content}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 댓글 단건 삭제 -->
+    <delete id="delete" parameterType="long">
+        DELETE FROM post_comments
+        WHERE id = #{commentId}
+    </delete>
+
+    <!-- 게시글 삭제 시, 해당 게시글 댓글 전체 삭제 -->
+    <delete id="deleteByPostId" parameterType="long">
+        DELETE FROM post_comments
+        WHERE post_id = #{postId}
+    </delete>
+
+    <!-- 특정 게시글에 해당 하는 댓글 단건 조회 -->
+    <select id="findByIdAndPostId" resultMap="PostCommentResultMap">
+        SELECT
+        c.id,
+        c.post_id,
+        c.author_email,
+        a.id AS author_id,
+        a.username AS author_username,
+        pr.profile_image_url AS author_profile_image_url,
+        c.content,
+        c.created_at
+        FROM post_comments c
+        JOIN accounts a ON a.email = c.author_email
+        LEFT JOIN profiles pr ON pr.email = c.author_email
+        WHERE c.id = #{commentId}
+        AND c.post_id = #{postId}
+    </select>
+
+    <!-- 회원 탈퇴 시 작성자 이메일 치환 -->
+    <update id="replaceAuthorEmail">
+        UPDATE post_comments
+        SET author_email = #{toEmail}
+        WHERE author_email = #{fromEmail}
+    </update>
+
+</mapper>

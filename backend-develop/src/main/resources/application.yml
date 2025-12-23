@@ -1,0 +1,41 @@
+spring:
+  profiles:
+    default: dev
+
+---
+spring:
+  config:
+    import: optional:file:.env[.properties]
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/yumyumcoach?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: ssafy
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expire-time: 1h
+  refresh-token-expire-time: 7d
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: info
+
+aws:
+  region: ap-northeast-2
+  s3:
+    bucket: yumyumcoach-dev-bucket
+  cdn-base-url: https://d3sn2183nped6z.cloudfront.net
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.yumyumcoach.domain
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

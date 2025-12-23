@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yumyumcoach.domain.community.mapper.PostImageMapper">
+
+    <resultMap id="PostImageResultMap" type="com.yumyumcoach.domain.community.entity.PostImage">
+        <id column="id" property="id"/>
+        <result column="post_id" property="postId"/>
+        <result column="image_url" property="imageUrl"/>
+        <result column="order_index" property="orderIndex"/>
+    </resultMap>
+
+    <!-- 특정 게시글의 이미지 목록 -->
+    <select id="findByPostId" parameterType="long" resultMap="PostImageResultMap">
+        SELECT id, post_id, image_url, order_index
+        FROM post_images
+        WHERE post_id = #{postId}
+        ORDER BY order_index ASC
+    </select>
+
+    <!-- 이미지 한 장 INSERT -->
+    <insert id="insert" parameterType="com.yumyumcoach.domain.community.entity.PostImage">
+        INSERT INTO post_images (
+            post_id, image_url, order_index
+        )
+        VALUES (
+           #{postId}, #{imageUrl}, #{orderIndex}
+               )
+    </insert>
+
+    <!-- 게시글 기준 전체 삭제 (게시글 삭제/이미지 재구성) -->
+    <delete id="deleteByPostId" parameterType="long">
+        DELETE FROM post_images
+        WHERE post_id = #{postId}
+    </delete>
+
+</mapper>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yumyumcoach.domain.exercise.mapper.ExerciseMapper">
+    <resultMap id="ExerciseResultMap" type="com.yumyumcoach.domain.exercise.entity.Exercise">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="met" property="met"/>
+        <result column="intensity_level" property="intensityLevel"/>
+        <result column="type" property="type"/>
+        <result column="description" property="description"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="ExerciseResultMap">
+        SELECT id, name, met, intensity_level, type, description
+        FROM exercises
+        ORDER BY id ASC
+    </select>
+
+    <select id="findById" parameterType="long" resultMap="ExerciseResultMap">
+        SELECT id, name, met, intensity_level, type, description
+        FROM exercises
+        WHERE id = #{exerciseId}
+    </select>
+
+    <select id="searchExercise" resultType="com.yumyumcoach.domain.exercise.dto.SearchDto">
+        SELECT name, type, met
+        FROM exercises
+        WHERE name LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY name ASC
+            LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countExercises" resultType="int">
+        SELECT COUNT(*)
+        FROM exercises
+        WHERE name LIKE CONCAT('%', #{keyword}, '%')
+    </select>
+
+</mapper>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yumyumcoach.domain.diet.mapper.DietFoodMapper">
+
+    <!-- 식단별 음식 리스트 -->
+    <select id="selectDietFoodsByDietId" resultType="com.yumyumcoach.domain.diet.dto.DietFoodDto">
+        SELECT
+            df.id,
+            df.diet_id     AS dietId,
+            df.food_id     AS foodId,
+            f.name         AS foodName,
+            df.serve_count AS serveCount,
+            df.order_index AS orderIndex,
+            f.calories,
+            f.carbohydrate AS carbs,
+            f.protein,
+            f.fat
+        FROM diet_foods df
+                 LEFT JOIN foods f ON df.food_id = f.id
+        WHERE df.diet_id = #{dietId}
+        ORDER BY df.order_index
+    </select>
+
+    <!-- 식단별 음식 전체 삭제 -->
+    <delete id="deleteDietFoodsByDietId" parameterType="long">
+        DELETE FROM diet_foods
+        WHERE diet_id = #{dietId}
+    </delete>
+
+    <!-- 식단별 음식 다중 추가 -->
+    <insert id="insertDietFoods">
+        INSERT INTO diet_foods (
+            diet_id,
+            order_index,
+            food_id,
+            serve_count
+        )
+        VALUES
+        <foreach collection="items" item="item" separator=",">
+            (#{dietId}, #{item.orderIndex}, #{item.foodId}, #{item.serveCount})
+        </foreach>
+    </insert>
+
+</mapper>
+

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yumyumcoach.domain.challenge.mapper.ChallengeRuleMapper">
+
+    <!-- 난이도별 룰 1건 조회 -->
+    <select id="findByChallengeIdAndDifficulty"
+            resultType="com.yumyumcoach.domain.challenge.entity.ChallengeRule">
+        SELECT
+            challenge_id        AS challengeId,
+            difficulty_code     AS difficultyCode,
+            required_success_days AS requiredSuccessDays,
+            daily_target_value  AS dailyTargetValue,
+            reward_title_id     AS rewardTitleId
+        FROM challenge_rules
+        WHERE challenge_id = #{challengeId}
+          AND difficulty_code = #{difficultyCode}
+    </select>
+
+    <!-- 상세 화면용 난이도 옵션(룰 + 보상 타이틀) -->
+    <select id="findDifficultyOptionsByChallengeId"
+            resultType="com.yumyumcoach.domain.challenge.dto.ChallengeDifficultyOptionResponse">
+        SELECT
+            cr.difficulty_code        AS difficultyCode,
+            cr.required_success_days  AS requiredSuccessDays,
+            cr.daily_target_value     AS dailyTargetValue,
+
+            t.id                      AS rewardTitleId,
+            t.name                    AS rewardTitleName,
+            t.description             AS rewardTitleDescription,
+            t.icon_emoji              AS rewardTitleIconEmoji
+        FROM challenge_rules cr
+                 LEFT JOIN titles t
+                           ON t.id = cr.reward_title_id
+        WHERE cr.challenge_id = #{challengeId}
+        ORDER BY FIELD(cr.difficulty_code, 'BEGINNER', 'INTERMEDIATE', 'ADVANCED')
+    </select>
+
+</mapper>
